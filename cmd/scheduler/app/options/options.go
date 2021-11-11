@@ -31,6 +31,7 @@ const (
 	defaultQueue           = "default"
 	defaultListenAddress   = ":8080"
 	defaultPluginsDir      = ""
+	defaultSelector        = ""
 
 	defaultQPS   = 2000.0
 	defaultBurst = 2000
@@ -58,6 +59,9 @@ type ServerOption struct {
 	// HealthzBindAddress is the IP address and port for the health check server to serve on
 	// defaulting to :11251
 	HealthzBindAddress string
+
+	// Selector (label query) to filter on nodes, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+	Selector string
 
 	// Parameters for scheduling tuning: the number of feasible nodes to find and score
 	MinNodesToFind             int32
@@ -106,6 +110,7 @@ func (s *ServerOption) AddFlags(fs *pflag.FlagSet) {
 	fs.Int32Var(&s.PercentageOfNodesToFind, "percentage-nodes-to-find", defaultPercentageOfNodesToFind, "The percentage of nodes to find and score, if <=0 will be calcuated based on the cluster size")
 
 	fs.StringVar(&s.PluginsDir, "plugins-dir", defaultPluginsDir, "vc-scheduler will load custom plugins which are in this directory")
+	fs.StringVarP(&s.Selector, "selector", "l", defaultSelector, "Selector (label query) to filter on nodes, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 }
 
 // CheckOptionOrDie check lock-object-namespace when LeaderElection is enabled.
