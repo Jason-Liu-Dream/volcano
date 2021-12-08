@@ -25,10 +25,11 @@ import (
 )
 
 const (
-	defaultQPS           = 50.0
-	defaultBurst         = 100
-	defaultWorkers       = 3
-	defaultMaxRequeueNum = 15
+	defaultQPS                = 50.0
+	defaultBurst              = 100
+	defaultWorkers            = 3
+	defaultMaxRequeueNum      = 15
+	defaultConcurrentTTLSyncs = 15
 )
 
 // ServerOption is the main context object for the controllers.
@@ -49,6 +50,7 @@ type ServerOption struct {
 	// HealthzBindAddress is the IP address and port for the health check server to serve on,
 	// defaulting to 0.0.0.0:11252
 	HealthzBindAddress string
+	ConcurrentTTLSyncs uint32
 }
 
 // NewServerOption creates a new CMServer with a default config.
@@ -73,6 +75,7 @@ func (s *ServerOption) AddFlags(fs *pflag.FlagSet) {
 		"Larger number = faster job updating, but more CPU load")
 	fs.StringArrayVar(&s.SchedulerNames, "scheduler-name", []string{"volcano"}, "Volcano will handle pods whose .spec.SchedulerName is same as scheduler-name")
 	fs.IntVar(&s.MaxRequeueNum, "max-requeue-num", defaultMaxRequeueNum, "The number of times a job, queue or command will be requeued before it is dropped out of the queue")
+	fs.Uint32Var(&s.ConcurrentTTLSyncs, "concurrent-ttl-after-finished-syncs", defaultConcurrentTTLSyncs, "The number of TTL-after-finished controller workers that are allowed to sync concurrently.")
 }
 
 // CheckOptionOrDie checks the LockObjectNamespace.
