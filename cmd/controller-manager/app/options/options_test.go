@@ -48,6 +48,7 @@ func TestAddFlags(t *testing.T) {
 		WorkerThreads:      defaultWorkers,
 		SchedulerName:      defaultSchedulerName,
 		MaxRequeueNum:      defaultMaxRequeueNum,
+		ConcurrentTTLSyncs: defaultConcurrentTTLSyncs,
 		HealthzBindAddress: ":11252",
 	}
 
