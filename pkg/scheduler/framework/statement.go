@@ -254,6 +254,12 @@ func (s *Statement) Allocate(task *api.TaskInfo, nodeInfo *api.NodeInfo) error {
 	}
 
 	task.NodeName = hostname
+	// set pod numa resource decision
+	if err := task.SetPodResourceDecision(); err != nil {
+		klog.Errorf("Failed to set task<%v/%v> pod resource decision to node Session <%v>: %v",
+			task.Namespace, task.Name, s.ssn.UID, err)
+		return err
+	}
 	if node, found := s.ssn.Nodes[hostname]; found {
 		if err := node.AddTask(task); err != nil {
 			klog.Errorf("Failed to add task <%v/%v> to node <%v> in Session <%v>: %v",
