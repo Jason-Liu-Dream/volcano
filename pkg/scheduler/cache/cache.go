@@ -935,6 +935,7 @@ func (sc *SchedulerCache) Snapshot() *schedulingapi.ClusterInfo {
 	}
 
 	copy(snapshot.NodeList, sc.NodeList)
+	klog.V(9).Infof("snapshot node list: %s", snapshot.NodeList)
 	for _, value := range sc.Nodes {
 		value.RefreshNumaSchedulerInfoByCrd()
 	}
