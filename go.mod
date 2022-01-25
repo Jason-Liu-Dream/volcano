@@ -5,12 +5,14 @@ go 1.16
 require (
 	github.com/agiledragon/gomonkey/v2 v2.1.0
 	github.com/fsnotify/fsnotify v1.4.9
+	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/imdario/mergo v0.3.5
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.7.0
-	github.com/prometheus/client_golang v1.7.1
+	github.com/paypal/load-watcher v0.2.1 // indirect
+	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	go.uber.org/automaxprocs v1.4.0
@@ -18,18 +20,20 @@ require (
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.19.15
-	k8s.io/apimachinery v0.19.15
-	k8s.io/client-go v0.19.15
+	k8s.io/apimachinery v0.22.3
+	k8s.io/client-go v0.22.3
 	k8s.io/code-generator v0.19.15
 	k8s.io/component-base v0.19.15
 	k8s.io/klog v1.0.0
 	k8s.io/kubernetes v1.19.15
+	sigs.k8s.io/scheduler-plugins v0.19.9
 	sigs.k8s.io/yaml v1.2.0
 	stathat.com/c/consistent v1.0.0
 	volcano.sh/apis v1.5.0-beta.0
 )
 
 replace (
+	github.com/paypal/load-watcher => github.com/paypal/load-watcher v0.2.1
 	google.golang.org/grpc => google.golang.org/grpc v1.29.1
 	k8s.io/api => k8s.io/api v0.19.15
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.19.15
@@ -56,4 +60,5 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.19.15
 	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.19.15
 	k8s.io/sample-controller => k8s.io/sample-controller v0.19.15
+	sigs.k8s.io/scheduler-plugins => sigs.k8s.io/scheduler-plugins v0.19.9
 )

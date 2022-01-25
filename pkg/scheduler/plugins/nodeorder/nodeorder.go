@@ -19,8 +19,8 @@ package nodeorder
 import (
 	"context"
 	"fmt"
-
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/scheduler/apis/config"
@@ -30,7 +30,10 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework/plugins/noderesources"
 	"k8s.io/kubernetes/pkg/scheduler/framework/plugins/tainttoleration"
 	k8sframework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
-
+	pluginConfig "sigs.k8s.io/scheduler-plugins/pkg/apis/config"
+	"sigs.k8s.io/scheduler-plugins/pkg/apis/config/v1beta1"
+	"sigs.k8s.io/scheduler-plugins/pkg/trimaran/targetloadpacking"
+	"strconv"
 	"volcano.sh/volcano/pkg/scheduler/api"
 	"volcano.sh/volcano/pkg/scheduler/framework"
 	"volcano.sh/volcano/pkg/scheduler/plugins/util"
@@ -55,6 +58,24 @@ const (
 	TaintTolerationWeight = "tainttoleration.weight"
 	// ImageLocalityWeight is the key for providing Image Locality Priority Weight in YAML
 	ImageLocalityWeight = "imagelocality.weight"
+	// TargetLoadPackingWeight is the key for providing TargetLoadPacking Weight in YAML
+	TargetLoadPackingWeight = "targetloadpacking.weight"
+	// TargetLoadPackingDefaultRequestsCpu is the key for providing TargetLoadPacking Default Requests of CPU in YAML
+	TargetLoadPackingDefaultRequestsCpu = "targetloadpacking.defaultrequests.cpu"
+	// TargetLoadPackingDefaultRequestsMultiplier is the key for providing TargetLoadPacking Default Requests Multiplier in YAML
+	TargetLoadPackingDefaultRequestsMultiplier = "targetloadpacking.defaultrequestsmultiplier"
+	// TargetLoadPackingTargetUtilization is the key for providing TargetLoadPacking Target Utilization in YAML
+	TargetLoadPackingTargetUtilization = "targetloadpacking.targetutilization"
+	// TargetLoadPackingMetricProviderType is the key for providing TargetLoadPacking Type of Metric Provider in YAML
+	TargetLoadPackingMetricProviderType = "targetloadpacking.metricprovider.type"
+	// TargetLoadPackingMetricProviderAddress is the key for providing TargetLoadPacking Metric Provider Address in YAML
+	TargetLoadPackingMetricProviderAddress = "targetloadpacking.metricprovider.address"
+	// TargetLoadPackingMetricProviderToken is the key for providing TargetLoadPacking Metric Provider Token in YAML
+	TargetLoadPackingMetricProviderToken = "targetloadpacking.metricprovider.token"
+	// TargetLoadPackingWatcherAddress is the key for providing TargetLoadPacking Watcher Address in YAML
+	TargetLoadPackingWatcherAddress = "targetloadpacking.watcheraddress"
+	// LoadVariationRiskBalancingWeight is the key for providing TargetLoadPacking Weight in YAML
+	LoadVariationRiskBalancingWeight = "loadvariationriskbalancing.weight"
 )
 
 type nodeOrderPlugin struct {
@@ -72,13 +93,15 @@ func (pp *nodeOrderPlugin) Name() string {
 }
 
 type priorityWeight struct {
-	leastReqWeight         int
-	mostReqWeight          int
-	nodeAffinityWeight     int
-	podAffinityWeight      int
-	balancedResourceWeight int
-	taintTolerationWeight  int
-	imageLocalityWeight    int
+	leastReqWeight                   int // NodeResourcesLeastAllocated
+	mostReqWeight                    int
+	nodeAffinityWeight               int
+	podAffinityWeight                int
+	balancedResourceWeight           int // NodeResourcesBalancedAllocation
+	taintTolerationWeight            int
+	imageLocalityWeight              int
+	targetLoadPackingWeight          int
+	loadVariationRiskBalancingWeight int
 }
 
 // calculateWeight from the provided arguments.
@@ -107,18 +130,115 @@ type priorityWeight struct {
 //        balancedresource.weight: 1
 //        tainttoleration.weight: 1
 //        imagelocality.weight: 1
+//        targetloadpacking.weight: 0
+//		  targetloadpacking.defaultrequests.cpu: "1000m"
+//		  targetloadpacking.defaultrequestsmultiplier: 1.5
+//        targetloadpacking.targetutilization: 70
+//        targetloadpacking.watcheraddress: ""
+//        targetloadpacking.metricprovider.type: "Prometheus"
+//        targetloadpacking.metricprovider.address: ""
+//        targetloadpacking.metricprovider.token: ""
+//        loadvariationriskbalancing.weight: 0
+//        loadvariationriskbalancing.safevariancemargin: 1
+//		  loadvariationriskbalancing.safevariancesensitivity: 2
+//        loadvariationriskbalancing.watcheraddress: ""
+//        loadvariationriskbalancing.metricprovider.type: "Prometheus"
+//        loadvariationriskbalancing.metricprovider.address: ""
+
+func targetLoadPackingArgs(args framework.Arguments) (pluginConfig.TargetLoadPackingArgs, error) {
+	arguments := pluginConfig.TargetLoadPackingArgs{}
+
+	// defaultRequests
+	quantity := *resource.NewMilliQuantity(v1beta1.DefaultRequestsMilliCores, resource.DecimalSI)
+	if value, ok := args[TargetLoadPackingDefaultRequestsCpu]; ok {
+		if qua, error := resource.ParseQuantity(value); error == nil {
+			quantity = qua
+		}
+	}
+	// defaultRequestsMultiplier
+	multiplier := v1beta1.DefaultRequestsMultiplier
+	if value, ok := args[TargetLoadPackingDefaultRequestsMultiplier]; ok {
+		if _, err := strconv.ParseFloat(value, 64); err == nil {
+			multiplier = value
+		}
+	}
+
+	// targetUtilization
+	utilization := v1beta1.DefaultTargetUtilizationPercent
+	if value, ok := args[TargetLoadPackingTargetUtilization]; ok {
+		if uti, err := strconv.ParseInt(value, 10, 64); err == nil {
+			utilization = uti
+		}
+	}
+
+	// watcherAddress
+	if value, ok := args[TargetLoadPackingWatcherAddress]; ok {
+		if value != "" {
+			arguments = pluginConfig.TargetLoadPackingArgs{
+				DefaultRequests: v1.ResourceList{
+					v1.ResourceCPU: quantity,
+				},
+				DefaultRequestsMultiplier: multiplier,
+				TargetUtilization:         utilization,
+				WatcherAddress:            value,
+			}
+		}
+		return arguments, nil
+	}
+
+	// metricProvider
+	providerAddress := ""
+	providerType := pluginConfig.KubernetesMetricsServer
+	providerToken := ""
+	if value, ok := args[TargetLoadPackingMetricProviderAddress]; ok {
+		klog.V(4).Infof("ZZZZZZZZZZZ%v", value)
+		if value == "" {
+			return arguments, fmt.Errorf("miss MetricProvider.Address or WatcherAddress")
+		}
+		providerAddress = value
+		if value, ok := args[TargetLoadPackingMetricProviderType]; ok {
+			klog.V(4).Infof("XXXXXXXXXX%v", value)
+			if pluginConfig.MetricProviderType(value) != pluginConfig.KubernetesMetricsServer &&
+				pluginConfig.MetricProviderType(value) != pluginConfig.Prometheus &&
+				pluginConfig.MetricProviderType(value) != pluginConfig.SignalFx {
+				return arguments, fmt.Errorf("invalid MetricProvider.Type, got %T", value)
+			}
+			providerType = pluginConfig.MetricProviderType(value)
+		}
+		if value, ok := args[TargetLoadPackingMetricProviderToken]; ok {
+			providerToken = value
+		}
+		arguments = pluginConfig.TargetLoadPackingArgs{
+			DefaultRequests: v1.ResourceList{
+				v1.ResourceCPU: quantity,
+			},
+			DefaultRequestsMultiplier: multiplier,
+			TargetUtilization:         utilization,
+			MetricProvider: pluginConfig.MetricProviderSpec{
+				Type:    providerType,
+				Address: providerAddress,
+				Token:   providerToken,
+			},
+		}
+		return arguments, nil
+	}
+	return arguments, fmt.Errorf("miss MetricProvider.Address or WatcherAddress")
+}
+
 func calculateWeight(args framework.Arguments) priorityWeight {
 	// Initial values for weights.
 	// By default, for backward compatibility and for reasonable scores,
 	// least requested priority is enabled and most requested priority is disabled.
 	weight := priorityWeight{
-		leastReqWeight:         1,
-		mostReqWeight:          0,
-		nodeAffinityWeight:     1,
-		podAffinityWeight:      1,
-		balancedResourceWeight: 1,
-		taintTolerationWeight:  1,
-		imageLocalityWeight:    1,
+		leastReqWeight:                   1,
+		mostReqWeight:                    0,
+		nodeAffinityWeight:               1,
+		podAffinityWeight:                1,
+		balancedResourceWeight:           1,
+		taintTolerationWeight:            1,
+		imageLocalityWeight:              1,
+		targetLoadPackingWeight:          0,
+		loadVariationRiskBalancingWeight: 0,
 	}
 
 	// Checks whether nodeaffinity.weight is provided or not, if given, modifies the value in weight struct.
@@ -142,6 +262,11 @@ func calculateWeight(args framework.Arguments) priorityWeight {
 	// Checks whether imagelocality.weight is provided or not, if given, modifies the value in weight struct.
 	args.GetInt(&weight.imageLocalityWeight, ImageLocalityWeight)
 
+	// Checks whether targetloadpacking.weight is provided or not, if given, modifies the value in weight struct.
+	args.GetInt(&weight.targetLoadPackingWeight, TargetLoadPackingWeight)
+
+	// Checks whether loadvariationriskbalancing.weight is provided or not, if given, modifies the value in weight struct.
+	args.GetInt(&weight.loadVariationRiskBalancingWeight, LoadVariationRiskBalancingWeight)
 	return weight
 }
 
@@ -184,6 +309,28 @@ func (pp *nodeOrderPlugin) OnSessionOpen(ssn *framework.Session) {
 
 	// Initialize k8s scheduling plugins
 	handle := k8s.NewFrameworkHandle(nodeMap, ssn.KubeClient(), ssn.InformerFactory())
+
+	// To determine whether to use NodeResourcesLeastAllocated or NodeResourcesBalancedAllocation plugin
+	if (weight.leastReqWeight != 0 || weight.balancedResourceWeight != 0) &&
+		(weight.targetLoadPackingWeight != 0 || weight.loadVariationRiskBalancingWeight != 0) {
+		klog.Warningf("TargetLoadPacking plugin and LoadVariationRiskBalancing plugin can not be " +
+			"used with NodeResourcesLeastAllocated plugin or NodeResourcesBalancedAllocation plugin")
+		weight.targetLoadPackingWeight = 0
+		weight.loadVariationRiskBalancingWeight = 0
+	}
+	// 0. TargetLoadPacking
+	targetLoadPacking := &targetloadpacking.TargetLoadPacking{}
+	if weight.targetLoadPackingWeight != 0 {
+		// TargetLoadPacking
+		if targetArgs, error := targetLoadPackingArgs(pp.pluginArguments); error != nil {
+			klog.Warningf("TargetLoadPacking plugin init failed, because of Error: %v", error)
+			weight.targetLoadPackingWeight = 0
+		} else {
+			p, _ := targetloadpacking.New(&targetArgs, handle)
+			targetLoadPacking = p.(*targetloadpacking.TargetLoadPacking)
+		}
+	}
+
 	// 1. NodeResourcesLeastAllocated
 	laArgs := &config.NodeResourcesLeastAllocatedArgs{
 		Resources: []config.ResourceSpec{
@@ -269,6 +416,18 @@ func (pp *nodeOrderPlugin) OnSessionOpen(ssn *framework.Session) {
 
 			// If balancedResourceWeight is provided, host.Score is multiplied with weight, if not, host.Score is added to total score.
 			nodeScore += float64(score) * float64(weight.balancedResourceWeight)
+		}
+
+		// TargetLoadPacking
+		if weight.targetLoadPackingWeight != 0 {
+			score, status := targetLoadPacking.Score(context.TODO(), nil, task.Pod, node.Name)
+			if !status.IsSuccess() {
+				klog.Warningf("TargetLoadPacking Priority Failed because of Error: %v", status.AsError())
+				return 0, status.AsError()
+			}
+			klog.V(4).Infof("########TargetLoadPacking score%v", score)
+			// If targetLoadPackingWeight is provided, host.Score is multiplied with weight, if not, host.Score is added to total score.
+			nodeScore += float64(score) * float64(weight.targetLoadPackingWeight)
 		}
 
 		// NodeAffinity
