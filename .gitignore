@@ -128,3 +128,4 @@ kubernetes.tar.gz
 
 # test coverage file
 coverage.txt
+/test-volcano-scheduler.conf
