@@ -512,7 +512,7 @@ func (pp *nodeOrderPlugin) OnSessionOpen(ssn *framework.Session) {
 				klog.Warningf("TargetLoadPacking Priority Failed because of Error: %v", status.AsError())
 				return 0, status.AsError()
 			}
-			klog.V(5).Infof("TargetLoadPacking score for task %s/%s on node %s is:%f", task.Namespace, task.Name, node.Name, score)
+			klog.V(5).Infof("TargetLoadPacking score for task %s/%s on node %s is:%v", task.Namespace, task.Name, node.Name, score)
 			// If targetLoadPackingWeight is provided, host.Score is multiplied with weight, if not, host.Score is added to total score.
 			nodeScore += float64(score) * float64(weight.targetLoadPackingWeight)
 		}
@@ -542,7 +542,7 @@ func (pp *nodeOrderPlugin) OnSessionOpen(ssn *framework.Session) {
 			nodeScore += float64(score) * float64(weight.nodeAffinityWeight)
 		}
 
-		klog.V(4).Infof("Total Score for task %s/%s on node %s is: %v", task.Namespace, task.Name, node.Name, nodeScore)
+		klog.V(4).Infof("Total Score for task %s/%s on node %s is: %f", task.Namespace, task.Name, node.Name, nodeScore)
 		return nodeScore, nil
 	}
 	ssn.AddNodeOrderFn(pp.Name(), nodeOrderFn)
