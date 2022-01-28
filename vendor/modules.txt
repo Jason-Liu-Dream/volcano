@@ -884,6 +884,7 @@ k8s.io/utils/trace
 sigs.k8s.io/scheduler-plugins/pkg/apis/config
 sigs.k8s.io/scheduler-plugins/pkg/apis/config/v1beta1
 sigs.k8s.io/scheduler-plugins/pkg/trimaran
+sigs.k8s.io/scheduler-plugins/pkg/trimaran/loadvariationriskbalancing
 sigs.k8s.io/scheduler-plugins/pkg/trimaran/targetloadpacking
 # sigs.k8s.io/structured-merge-diff/v4 v4.1.2
 sigs.k8s.io/structured-merge-diff/v4/value

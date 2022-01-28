@@ -32,6 +32,7 @@ import (
 	k8sframework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
 	pluginConfig "sigs.k8s.io/scheduler-plugins/pkg/apis/config"
 	"sigs.k8s.io/scheduler-plugins/pkg/apis/config/v1beta1"
+	"sigs.k8s.io/scheduler-plugins/pkg/trimaran/loadvariationriskbalancing"
 	"sigs.k8s.io/scheduler-plugins/pkg/trimaran/targetloadpacking"
 	"strconv"
 	"volcano.sh/volcano/pkg/scheduler/api"
@@ -76,6 +77,18 @@ const (
 	TargetLoadPackingWatcherAddress = "targetloadpacking.watcheraddress"
 	// LoadVariationRiskBalancingWeight is the key for providing TargetLoadPacking Weight in YAML
 	LoadVariationRiskBalancingWeight = "loadvariationriskbalancing.weight"
+	// LoadVariationRiskBalancingSafeVarianceMargin is the key for providing LoadVariationRiskBalancing Multiplier (non-negative floating point) of standard deviation in YAML
+	LoadVariationRiskBalancingSafeVarianceMargin = "loadvariationriskbalancing.safevariancemargin"
+	// LoadVariationRiskBalancingSafeVarianceSensitivity is the key for providing LoadVariationRiskBalancing Root power (non-negative floating point) of standard deviation in YAML
+	LoadVariationRiskBalancingSafeVarianceSensitivity = "loadvariationriskbalancing.safevariancesensitivity"
+	// LoadVariationRiskBalancingMetricProviderType is the key for providing LoadVariationRiskBalancing Type of Metric Provider in YAML
+	LoadVariationRiskBalancingMetricProviderType = "loadvariationriskbalancing.metricprovider.type"
+	// LoadVariationRiskBalancingMetricProviderAddress is the key for providing LoadVariationRiskBalancing Metric Provider Address in YAML
+	LoadVariationRiskBalancingMetricProviderAddress = "loadvariationriskbalancing.metricprovider.address"
+	// LoadVariationRiskBalancingMetricProviderToken is the key for providing LoadVariationRiskBalancing Metric Provider Token in YAML
+	LoadVariationRiskBalancingMetricProviderToken = "loadvariationriskbalancing.metricprovider.token"
+	// LoadVariationRiskBalancingWatcherAddress is the key for providing LoadVariationRiskBalancing Watcher Address in YAML
+	LoadVariationRiskBalancingWatcherAddress = "loadvariationriskbalancing.watcheraddress"
 )
 
 type nodeOrderPlugin struct {
@@ -144,6 +157,7 @@ type priorityWeight struct {
 //        loadvariationriskbalancing.watcheraddress: ""
 //        loadvariationriskbalancing.metricprovider.type: "Prometheus"
 //        loadvariationriskbalancing.metricprovider.address: ""
+// 		  loadvariationriskbalancing.metricprovider.token: ""
 
 func targetLoadPackingArgs(args framework.Arguments) (pluginConfig.TargetLoadPackingArgs, error) {
 	arguments := pluginConfig.TargetLoadPackingArgs{}
@@ -191,13 +205,11 @@ func targetLoadPackingArgs(args framework.Arguments) (pluginConfig.TargetLoadPac
 	providerType := pluginConfig.KubernetesMetricsServer
 	providerToken := ""
 	if value, ok := args[TargetLoadPackingMetricProviderAddress]; ok {
-		klog.V(4).Infof("ZZZZZZZZZZZ%v", value)
 		if value == "" {
 			return arguments, fmt.Errorf("miss MetricProvider.Address or WatcherAddress")
 		}
 		providerAddress = value
 		if value, ok := args[TargetLoadPackingMetricProviderType]; ok {
-			klog.V(4).Infof("XXXXXXXXXX%v", value)
 			if pluginConfig.MetricProviderType(value) != pluginConfig.KubernetesMetricsServer &&
 				pluginConfig.MetricProviderType(value) != pluginConfig.Prometheus &&
 				pluginConfig.MetricProviderType(value) != pluginConfig.SignalFx {
@@ -219,6 +231,69 @@ func targetLoadPackingArgs(args framework.Arguments) (pluginConfig.TargetLoadPac
 				Address: providerAddress,
 				Token:   providerToken,
 			},
+		}
+		return arguments, nil
+	}
+	return arguments, fmt.Errorf("miss MetricProvider.Address or WatcherAddress")
+}
+
+func loadVariationRiskBalancingArgs(args framework.Arguments) (pluginConfig.LoadVariationRiskBalancingArgs, error) {
+	arguments := pluginConfig.LoadVariationRiskBalancingArgs{}
+
+	// margin
+	margin := v1beta1.DefaultSafeVarianceMargin
+	if value, ok := args[LoadVariationRiskBalancingSafeVarianceMargin]; ok {
+		if mar, err := strconv.ParseFloat(value, 64); err == nil {
+			margin = mar
+		}
+	}
+	//
+	sensitivity := v1beta1.DefaultSafeVarianceSensitivity
+	if value, ok := args[LoadVariationRiskBalancingSafeVarianceSensitivity]; ok {
+		if sen, err := strconv.ParseFloat(value, 64); err == nil {
+			margin = sen
+		}
+	}
+	// watcherAddress
+	if value, ok := args[LoadVariationRiskBalancingWatcherAddress]; ok {
+		if value != "" {
+			arguments = pluginConfig.LoadVariationRiskBalancingArgs{
+				WatcherAddress:          value,
+				SafeVarianceMargin:      margin,
+				SafeVarianceSensitivity: sensitivity,
+			}
+		}
+		return arguments, nil
+	}
+
+	// metricProvider
+	providerAddress := ""
+	providerType := pluginConfig.KubernetesMetricsServer
+	providerToken := ""
+	if value, ok := args[LoadVariationRiskBalancingMetricProviderAddress]; ok {
+		if value == "" {
+			return arguments, fmt.Errorf("miss MetricProvider.Address or WatcherAddress")
+		}
+		providerAddress = value
+		if value, ok := args[LoadVariationRiskBalancingMetricProviderType]; ok {
+			if pluginConfig.MetricProviderType(value) != pluginConfig.KubernetesMetricsServer &&
+				pluginConfig.MetricProviderType(value) != pluginConfig.Prometheus &&
+				pluginConfig.MetricProviderType(value) != pluginConfig.SignalFx {
+				return arguments, fmt.Errorf("invalid MetricProvider.Type, got %T", value)
+			}
+			providerType = pluginConfig.MetricProviderType(value)
+		}
+		if value, ok := args[LoadVariationRiskBalancingMetricProviderToken]; ok {
+			providerToken = value
+		}
+		arguments = pluginConfig.LoadVariationRiskBalancingArgs{
+			MetricProvider: pluginConfig.MetricProviderSpec{
+				Type:    providerType,
+				Address: providerAddress,
+				Token:   providerToken,
+			},
+			SafeVarianceMargin:      margin,
+			SafeVarianceSensitivity: sensitivity,
 		}
 		return arguments, nil
 	}
@@ -318,10 +393,9 @@ func (pp *nodeOrderPlugin) OnSessionOpen(ssn *framework.Session) {
 		weight.targetLoadPackingWeight = 0
 		weight.loadVariationRiskBalancingWeight = 0
 	}
-	// 0. TargetLoadPacking
+	// 0.1. TargetLoadPacking
 	targetLoadPacking := &targetloadpacking.TargetLoadPacking{}
 	if weight.targetLoadPackingWeight != 0 {
-		// TargetLoadPacking
 		if targetArgs, error := targetLoadPackingArgs(pp.pluginArguments); error != nil {
 			klog.Warningf("TargetLoadPacking plugin init failed, because of Error: %v", error)
 			weight.targetLoadPackingWeight = 0
@@ -329,6 +403,19 @@ func (pp *nodeOrderPlugin) OnSessionOpen(ssn *framework.Session) {
 			p, _ := targetloadpacking.New(&targetArgs, handle)
 			targetLoadPacking = p.(*targetloadpacking.TargetLoadPacking)
 		}
+	}
+
+	// 0.2. LoadVariationRiskBalancing
+	loadVariationRiskBalancing := &loadvariationriskbalancing.LoadVariationRiskBalancing{}
+	if weight.loadVariationRiskBalancingWeight != 0 {
+		if loadArgs, error := loadVariationRiskBalancingArgs(pp.pluginArguments); error != nil {
+			klog.Warningf("LoadVariationRiskBalancing plugin init failed, because of Error: %v", error)
+			weight.loadVariationRiskBalancingWeight = 0
+		} else {
+			p, _ := loadvariationriskbalancing.New(&loadArgs, handle)
+			loadVariationRiskBalancing = p.(*loadvariationriskbalancing.LoadVariationRiskBalancing)
+		}
+
 	}
 
 	// 1. NodeResourcesLeastAllocated
@@ -425,8 +512,20 @@ func (pp *nodeOrderPlugin) OnSessionOpen(ssn *framework.Session) {
 				klog.Warningf("TargetLoadPacking Priority Failed because of Error: %v", status.AsError())
 				return 0, status.AsError()
 			}
-			klog.V(4).Infof("########TargetLoadPacking score%v", score)
+			klog.V(5).Infof("TargetLoadPacking score for task %s/%s on node %s is:%v", task.Namespace, task.Name, node.Name, score)
 			// If targetLoadPackingWeight is provided, host.Score is multiplied with weight, if not, host.Score is added to total score.
+			nodeScore += float64(score) * float64(weight.targetLoadPackingWeight)
+		}
+
+		// LoadVariationRiskBalancing
+		if weight.loadVariationRiskBalancingWeight != 0 {
+			score, status := loadVariationRiskBalancing.Score(context.TODO(), nil, task.Pod, node.Name)
+			if !status.IsSuccess() {
+				klog.Warningf("LoadVariationRiskBalancing Priority Failed because of Error: %v", status.AsError())
+				return 0, status.AsError()
+			}
+			klog.V(5).Infof("LoadVariationRiskBalancing score for task %s/%s on node %s is:%v", task.Namespace, task.Name, node.Name, score)
+			// If loadVariationRiskBalancingWeight is provided, host.Score is multiplied with weight, if not, host.Score is added to total score.
 			nodeScore += float64(score) * float64(weight.targetLoadPackingWeight)
 		}
 
