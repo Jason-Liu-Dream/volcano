@@ -4,7 +4,7 @@ Copyright 2019 The Kubernetes Authors.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
+-
     http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -144,8 +144,8 @@ type priorityWeight struct {
 //        tainttoleration.weight: 1
 //        imagelocality.weight: 1
 //        targetloadpacking.weight: 0
-//		  targetloadpacking.defaultrequests.cpu: "1000m"
-//		  targetloadpacking.defaultrequestsmultiplier: 1.5
+//        targetloadpacking.defaultrequests.cpu: "1000m"
+//        targetloadpacking.defaultrequestsmultiplier: 1.5
 //        targetloadpacking.targetutilization: 70
 //        targetloadpacking.watcheraddress: ""
 //        targetloadpacking.metricprovider.type: "Prometheus"
@@ -153,11 +153,11 @@ type priorityWeight struct {
 //        targetloadpacking.metricprovider.token: ""
 //        loadvariationriskbalancing.weight: 0
 //        loadvariationriskbalancing.safevariancemargin: 1
-//		  loadvariationriskbalancing.safevariancesensitivity: 2
+//        loadvariationriskbalancing.safevariancesensitivity: 2
 //        loadvariationriskbalancing.watcheraddress: ""
 //        loadvariationriskbalancing.metricprovider.type: "Prometheus"
 //        loadvariationriskbalancing.metricprovider.address: ""
-// 		  loadvariationriskbalancing.metricprovider.token: ""
+//        loadvariationriskbalancing.metricprovider.token: ""
 
 func targetLoadPackingArgs(args framework.Arguments) (pluginConfig.TargetLoadPackingArgs, error) {
 	arguments := pluginConfig.TargetLoadPackingArgs{}
@@ -240,14 +240,14 @@ func targetLoadPackingArgs(args framework.Arguments) (pluginConfig.TargetLoadPac
 func loadVariationRiskBalancingArgs(args framework.Arguments) (pluginConfig.LoadVariationRiskBalancingArgs, error) {
 	arguments := pluginConfig.LoadVariationRiskBalancingArgs{}
 
-	// margin
+	// safeVarianceMargin
 	margin := v1beta1.DefaultSafeVarianceMargin
 	if value, ok := args[LoadVariationRiskBalancingSafeVarianceMargin]; ok {
 		if mar, err := strconv.ParseFloat(value, 64); err == nil {
 			margin = mar
 		}
 	}
-	//
+	// safeVarianceSensitivity
 	sensitivity := v1beta1.DefaultSafeVarianceSensitivity
 	if value, ok := args[LoadVariationRiskBalancingSafeVarianceSensitivity]; ok {
 		if sen, err := strconv.ParseFloat(value, 64); err == nil {
