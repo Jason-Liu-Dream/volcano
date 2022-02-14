@@ -526,7 +526,7 @@ func (pp *nodeOrderPlugin) OnSessionOpen(ssn *framework.Session) {
 			}
 			klog.V(5).Infof("LoadVariationRiskBalancing score for task %s/%s on node %s is:%v", task.Namespace, task.Name, node.Name, score)
 			// If loadVariationRiskBalancingWeight is provided, host.Score is multiplied with weight, if not, host.Score is added to total score.
-			nodeScore += float64(score) * float64(weight.targetLoadPackingWeight)
+			nodeScore += float64(score) * float64(weight.loadVariationRiskBalancingWeight)
 		}
 
 		// NodeAffinity
