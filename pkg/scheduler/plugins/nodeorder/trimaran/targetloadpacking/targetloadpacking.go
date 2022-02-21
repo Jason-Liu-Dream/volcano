@@ -42,7 +42,7 @@ import (
 
 	pluginConfig "sigs.k8s.io/scheduler-plugins/pkg/apis/config"
 	"sigs.k8s.io/scheduler-plugins/pkg/apis/config/v1beta1"
-	"sigs.k8s.io/scheduler-plugins/pkg/trimaran"
+	"volcano.sh/volcano/pkg/scheduler/plugins/nodeorder/trimaran"
 )
 
 const (

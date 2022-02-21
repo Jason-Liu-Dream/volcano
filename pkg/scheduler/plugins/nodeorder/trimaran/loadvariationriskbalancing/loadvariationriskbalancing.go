@@ -34,7 +34,7 @@ import (
 	"k8s.io/klog/v2"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
 
-	"sigs.k8s.io/scheduler-plugins/pkg/trimaran"
+	"volcano.sh/volcano/pkg/scheduler/plugins/nodeorder/trimaran"
 )
 
 const (
