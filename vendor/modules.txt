@@ -793,6 +793,7 @@ k8s.io/gengo/types
 ## explicit
 k8s.io/klog
 # k8s.io/klog/v2 v2.9.0
+## explicit
 k8s.io/klog/v2
 # k8s.io/kube-openapi v0.0.0-20200805222855-6aeccd4b50c6
 k8s.io/kube-openapi/cmd/openapi-gen/args
@@ -883,9 +884,6 @@ k8s.io/utils/trace
 ## explicit
 sigs.k8s.io/scheduler-plugins/pkg/apis/config
 sigs.k8s.io/scheduler-plugins/pkg/apis/config/v1beta1
-sigs.k8s.io/scheduler-plugins/pkg/trimaran
-sigs.k8s.io/scheduler-plugins/pkg/trimaran/loadvariationriskbalancing
-sigs.k8s.io/scheduler-plugins/pkg/trimaran/targetloadpacking
 # sigs.k8s.io/structured-merge-diff/v4 v4.1.2
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0

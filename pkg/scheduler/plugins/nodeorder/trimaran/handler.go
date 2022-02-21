@@ -80,7 +80,19 @@ func (p *PodAssignEventHandler) OnUpdate(oldObj, newObj interface{}) {
 }
 
 func (p *PodAssignEventHandler) OnDelete(obj interface{}) {
-	pod := obj.(*v1.Pod)
+	pod, ok := obj.(*v1.Pod)
+	if !ok {
+		tombstone, ok := obj.(clientcache.DeletedFinalStateUnknown)
+		if !ok {
+			klog.Errorf("couldn't get object from tombstone %#v", obj)
+			return
+		}
+		pod, ok = tombstone.Obj.(*v1.Pod)
+		if !ok {
+			klog.Errorf("Tombstone contained object that is not an Pod: %#v", obj)
+			return
+		}
+	}
 	nodeName := pod.Spec.NodeName
 	p.Lock()
 	defer p.Unlock()

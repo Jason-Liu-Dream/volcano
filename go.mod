@@ -11,7 +11,7 @@ require (
 	github.com/imdario/mergo v0.3.5
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.7.0
-	github.com/paypal/load-watcher v0.2.1 // indirect
+	github.com/paypal/load-watcher v0.2.1
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -25,6 +25,7 @@ require (
 	k8s.io/code-generator v0.19.15
 	k8s.io/component-base v0.19.15
 	k8s.io/klog v1.0.0
+	k8s.io/klog/v2 v2.9.0
 	k8s.io/kubernetes v1.19.15
 	sigs.k8s.io/scheduler-plugins v0.19.9
 	sigs.k8s.io/yaml v1.2.0

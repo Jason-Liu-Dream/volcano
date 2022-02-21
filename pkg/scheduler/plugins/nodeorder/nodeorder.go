@@ -32,11 +32,11 @@ import (
 	k8sframework "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
 	pluginConfig "sigs.k8s.io/scheduler-plugins/pkg/apis/config"
 	"sigs.k8s.io/scheduler-plugins/pkg/apis/config/v1beta1"
-	"sigs.k8s.io/scheduler-plugins/pkg/trimaran/loadvariationriskbalancing"
-	"sigs.k8s.io/scheduler-plugins/pkg/trimaran/targetloadpacking"
 	"strconv"
 	"volcano.sh/volcano/pkg/scheduler/api"
 	"volcano.sh/volcano/pkg/scheduler/framework"
+	"volcano.sh/volcano/pkg/scheduler/plugins/nodeorder/trimaran/loadvariationriskbalancing"
+	"volcano.sh/volcano/pkg/scheduler/plugins/nodeorder/trimaran/targetloadpacking"
 	"volcano.sh/volcano/pkg/scheduler/plugins/util"
 	"volcano.sh/volcano/pkg/scheduler/plugins/util/k8s"
 )
