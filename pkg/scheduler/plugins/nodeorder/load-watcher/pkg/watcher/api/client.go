@@ -96,7 +96,7 @@ func (c serviceClient) GetLatestWatcherMetrics() (*watcher.WatcherMetrics, error
 	if err != nil {
 		return nil, err
 	}
-	klog.V(3).Infof("received status code %v from watcher:%s", resp.StatusCode, s)
+	klog.V(6).Infof("received status code %v from watcher", resp.StatusCode)
 	if resp.StatusCode == http.StatusOK {
 		data := watcher.Data{NodeMetricsMap: make(map[string]watcher.NodeMetrics)}
 		metrics := watcher.WatcherMetrics{Data: data}
