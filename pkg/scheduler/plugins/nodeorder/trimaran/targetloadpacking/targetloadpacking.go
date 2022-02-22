@@ -30,8 +30,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/paypal/load-watcher/pkg/watcher"
-	loadwatcherapi "github.com/paypal/load-watcher/pkg/watcher/api"
+	"volcano.sh/volcano/pkg/scheduler/plugins/nodeorder/load-watcher/pkg/watcher"
+	loadwatcherapi "volcano.sh/volcano/pkg/scheduler/plugins/nodeorder/load-watcher/pkg/watcher/api"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"

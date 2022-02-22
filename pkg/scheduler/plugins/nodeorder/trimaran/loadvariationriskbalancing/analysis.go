@@ -19,7 +19,7 @@ package loadvariationriskbalancing
 import (
 	"math"
 
-	"github.com/paypal/load-watcher/pkg/watcher"
+	"volcano.sh/volcano/pkg/scheduler/plugins/nodeorder/load-watcher/pkg/watcher"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
