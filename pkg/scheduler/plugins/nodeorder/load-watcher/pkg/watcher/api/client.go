@@ -19,6 +19,7 @@ package api
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"time"
 
@@ -69,6 +70,13 @@ func NewLibraryClient(opts watcher.MetricsProviderOpts) (Client, error) {
 func NewServiceClient(watcherAddress string) (Client, error) {
 	return serviceClient{
 		httpClient: http.Client{
+			Transport: &http.Transport{
+				DialContext: (&net.Dialer{
+					Timeout:   10 * time.Second,
+					KeepAlive: -1,
+				}).DialContext,
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 20},
 			Timeout: httpClientTimeoutSeconds,
 		},
 		watcherAddress: watcherAddress,
