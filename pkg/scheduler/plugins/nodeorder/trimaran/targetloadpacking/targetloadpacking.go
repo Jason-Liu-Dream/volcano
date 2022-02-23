@@ -29,7 +29,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
 	"volcano.sh/volcano/pkg/scheduler/plugins/nodeorder/load-watcher/pkg/watcher"
 	loadwatcherapi "volcano.sh/volcano/pkg/scheduler/plugins/nodeorder/load-watcher/pkg/watcher/api"
 
@@ -69,6 +68,8 @@ type TargetLoadPacking struct {
 }
 
 func New(obj runtime.Object, handle framework.FrameworkHandle) (framework.Plugin, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	args, err := getArgs(obj)
 	if err != nil {
 		return nil, err
@@ -119,15 +120,21 @@ func New(obj runtime.Object, handle framework.FrameworkHandle) (framework.Plugin
 	if err != nil {
 		klog.Warningf("unable to populate metrics initially: %v", err)
 	}
-	go func() {
+	go func(ctx context.Context) {
 		metricsUpdaterTicker := time.NewTicker(time.Second * metricsUpdateIntervalSeconds)
 		for range metricsUpdaterTicker.C {
-			err = pl.updateMetrics()
-			if err != nil {
-				klog.Warningf("unable to update metrics: %v", err)
+			select {
+			case <-ctx.Done():
+				klog.Warningln("update metric process interrupt")
+				return
+			default:
+				err = pl.updateMetrics()
+				if err != nil {
+					klog.Warningf("unable to update metrics: %v", err)
+				}
 			}
 		}
-	}()
+	}(ctx)
 
 	return pl, nil
 }
