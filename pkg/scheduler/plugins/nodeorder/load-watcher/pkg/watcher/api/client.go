@@ -86,13 +86,15 @@ func (c serviceClient) GetLatestWatcherMetrics() (*watcher.WatcherMetrics, error
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Connection", "close")
-
 	//TODO(aqadeer): Add a couple of retries for transient errors
 	resp, err := c.httpClient.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	resp.Header.Add("Connection", "close")
 	s, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
