@@ -17,6 +17,7 @@ limitations under the License.
 package loadvariationriskbalancing
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -55,6 +56,8 @@ type Collector struct {
 
 // newCollector : create an instance of a data collector
 func newCollector(obj runtime.Object) (*Collector, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	// get the plugin arguments
 	args := getArgs(obj)
 
@@ -86,15 +89,22 @@ func newCollector(obj runtime.Object) (*Collector, error) {
 		klog.Warningf("unable to populate metrics initially: %v", err)
 	}
 	// start periodic updates
-	go func() {
+	go func(ctx context.Context) {
 		metricsUpdaterTicker := time.NewTicker(time.Second * metricsUpdateIntervalSeconds)
 		for range metricsUpdaterTicker.C {
-			err = collector.updateMetrics()
-			if err != nil {
-				klog.Warningf("unable to update metrics: %v", err)
+			select {
+			case <-ctx.Done():
+				klog.Warningln("update metric process interrupt")
+				return
+			default:
+				err = collector.updateMetrics()
+				if err != nil {
+					klog.Warningf("unable to update metrics: %v", err)
+				}
 			}
 		}
-	}()
+
+	}(ctx)
 	return collector, nil
 }
 
