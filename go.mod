@@ -4,13 +4,16 @@ go 1.16
 
 require (
 	github.com/agiledragon/gomonkey/v2 v2.1.0
+	github.com/francoispqt/gojay v1.2.13
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/imdario/mergo v0.3.5
 	github.com/onsi/ginkgo/v2 v2.0.0
 	github.com/onsi/gomega v1.17.0
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/common v0.26.0
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	go.uber.org/automaxprocs v1.4.0
@@ -23,7 +26,10 @@ require (
 	k8s.io/code-generator v0.19.15
 	k8s.io/component-base v0.19.15
 	k8s.io/klog v1.0.0
+	k8s.io/klog/v2 v2.2.0
 	k8s.io/kubernetes v1.19.15
+	k8s.io/metrics v0.19.15
+	sigs.k8s.io/scheduler-plugins v0.19.9
 	sigs.k8s.io/yaml v1.2.0
 	stathat.com/c/consistent v1.0.0
 	volcano.sh/apis v1.5.0-beta.0
@@ -56,4 +62,5 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.19.15
 	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.19.15
 	k8s.io/sample-controller => k8s.io/sample-controller v0.19.15
+	sigs.k8s.io/scheduler-plugins => sigs.k8s.io/scheduler-plugins v0.19.9
 )
