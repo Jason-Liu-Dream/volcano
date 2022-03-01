@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/agiledragon/gomonkey/v2 v2.1.0
 	github.com/fsnotify/fsnotify v1.4.9
+	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/imdario/mergo v0.3.5
