@@ -45,8 +45,8 @@ const (
 )
 
 type numaPlugin struct {
+	sync.Mutex
 	// Arguments given for the plugin
-	lock            sync.Mutex
 	pluginArguments framework.Arguments
 	hintProviders   []policy.HintProvider
 	assignRes       map[api.TaskID]map[string]api.ResNumaSets // map[taskUID]map[nodename][resourceName]cpuset.CPUSet
@@ -142,8 +142,9 @@ func (pp *numaPlugin) OnSessionOpen(ssn *framework.Session) {
 				resNumaSets[resName] = resNumaSets[resName].Difference(assign)
 			}
 		}
-		pp.lock.Lock()
-		defer pp.lock.Unlock()
+
+		pp.Lock()
+		defer pp.Unlock()
 		if _, ok := pp.assignRes[task.UID]; !ok {
 			pp.assignRes[task.UID] = make(map[string]api.ResNumaSets)
 		}

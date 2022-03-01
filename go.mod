@@ -5,14 +5,13 @@ go 1.16
 require (
 	github.com/agiledragon/gomonkey/v2 v2.1.0
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/imdario/mergo v0.3.5
-	github.com/onsi/ginkgo v1.11.0
-	github.com/onsi/gomega v1.7.0
+	github.com/onsi/ginkgo/v2 v2.0.0
+	github.com/onsi/gomega v1.17.0
 	github.com/paypal/load-watcher v0.2.1
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.7.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	go.uber.org/automaxprocs v1.4.0
@@ -20,8 +19,8 @@ require (
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.19.15
-	k8s.io/apimachinery v0.22.3
-	k8s.io/client-go v0.22.3
+	k8s.io/apimachinery v0.19.15
+	k8s.io/client-go v0.19.15
 	k8s.io/code-generator v0.19.15
 	k8s.io/component-base v0.19.15
 	k8s.io/klog v1.0.0
