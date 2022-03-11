@@ -122,18 +122,35 @@ func New(obj runtime.Object, handle framework.FrameworkHandle) (framework.Plugin
 	}
 	go func(ctx context.Context) {
 		metricsUpdaterTicker := time.NewTicker(time.Second * metricsUpdateIntervalSeconds)
-		for range metricsUpdaterTicker.C {
+
+		// change time ticker channel use: https://mp.weixin.qq.com/s/o4uFiaJRIH25wt6X9LYFmw
+		for {
 			select {
 			case <-ctx.Done():
 				klog.Warningln("update metric process interrupt")
 				return
-			default:
+			case _, ok := <-metricsUpdaterTicker.C:
+				if !ok {
+					return
+				}
 				err = pl.updateMetrics()
 				if err != nil {
 					klog.Warningf("unable to update metrics: %v", err)
 				}
 			}
 		}
+		//for range metricsUpdaterTicker.C {
+		//	select {
+		//	case <-ctx.Done():
+		//		klog.Warningln("update metric process interrupt")
+		//		return
+		//	default:
+		//		err = pl.updateMetrics()
+		//		if err != nil {
+		//			klog.Warningf("unable to update metrics: %v", err)
+		//		}
+		//	}
+		//}
 	}(ctx)
 
 	return pl, nil
